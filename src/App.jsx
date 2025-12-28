@@ -7,6 +7,8 @@ import MicroBreaks from './components/MicroBreaks';
 import AnalyticsHeatmap from './components/AnalyticsHeatmap';
 import InstallButton from './components/InstallButton';
 import './App.css';
+import StreakCounter from './components/StreakCounter';
+
 
 function App() {
   const [user, setUser] = useState(null);
@@ -106,7 +108,7 @@ function App() {
           </button>
         </nav>
       </header>
-
+{user && <StreakCounter userId={user.uid} />}
       <main>
         {view === 'timer' && (
           <>

@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { doc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase';
 import { playTimerComplete, playSessionInterrupted } from '../utils/sounds';
+import confetti from 'canvas-confetti';
+
 
 
 export default function DeepWorkFortress({ userId, sessionId, duration, onComplete }) {
@@ -56,23 +58,43 @@ export default function DeepWorkFortress({ userId, sessionId, duration, onComple
     return () => clearInterval(timer);
   }, [timeLeft]);
 
-  const handleSessionComplete = async () => {
-	  playTimerComplete();
-    // Marquer la session comme complétée dans Firebase
-    if (userId && sessionId && !sessionId.startsWith('local-')) {
-      try {
-        const sessionRef = doc(db, 'sessions', sessionId);
-        await updateDoc(sessionRef, {
-          completed: true,
-          endTime: new Date()
-        });
-        console.log('✅ Session marquée comme complétée:', sessionId);
-      } catch (error) {
-        console.error('❌ Erreur update session:', error);
-      }
+const handleSessionComplete = async () => {
+  // Test confettis
+  console.log('🎊 Session terminée - Lancement confettis');
+  
+  try {
+    // Import dynamique
+    const confetti = (await import('canvas-confetti')).default;
+    
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 }
+    });
+    
+    console.log('✅ Confettis lancés');
+  } catch (error) {
+    console.error('❌ Erreur confettis:', error);
+  }
+  
+  playTimerComplete();
+  
+  // Marquer la session comme complétée dans Firebase
+  if (userId && sessionId && !sessionId.startsWith('local-')) {
+    try {
+      const sessionRef = doc(db, 'sessions', sessionId);
+      await updateDoc(sessionRef, {
+        completed: true,
+        endTime: new Date()
+      });
+      console.log('✅ Session marquée comme complétée:', sessionId);
+    } catch (error) {
+      console.error('❌ Erreur update session:', error);
     }
-    onComplete();
-  };
+  }
+  onComplete();
+};
+
 
   const handleExitAttempt = async () => {
     const minutesLost = Math.floor(timeLeft / 60);

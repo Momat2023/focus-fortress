@@ -1,4 +1,29 @@
-export const playSound = (frequency, duration) => {
+// Thèmes sonores disponibles
+const soundThemes = {
+  classic: {
+    start: [600],
+    complete: [800, 900, 1000],
+    interrupted: [400, 400]
+  },
+  zen: {
+    start: [432],
+    complete: [528, 594, 648],
+    interrupted: [256, 256]
+  },
+  gaming: {
+    start: [523],
+    complete: [659, 784, 988],
+    interrupted: [330, 294]
+  }
+};
+
+// Récupérer le thème actuel
+const getSoundTheme = () => {
+  return localStorage.getItem('soundTheme') || 'classic';
+};
+
+// Jouer un son avec une fréquence
+const playSound = (frequency, duration = 150) => {
   try {
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
     const oscillator = audioContext.createOscillator();
@@ -20,18 +45,35 @@ export const playSound = (frequency, duration) => {
   }
 };
 
-export const playTimerComplete = () => {
-  playSound(800, 150);
-  setTimeout(() => playSound(900, 150), 200);
-  setTimeout(() => playSound(1000, 200), 400);
+// Sons publics
+export const playSessionStart = () => {
+  const theme = getSoundTheme();
+  const frequencies = soundThemes[theme].start;
+  playSound(frequencies[0], 100);
 };
 
-export const playSessionStart = () => {
-  playSound(600, 100);
+export const playTimerComplete = () => {
+  const theme = getSoundTheme();
+  const frequencies = soundThemes[theme].complete;
+  playSound(frequencies[0], 150);
+  setTimeout(() => playSound(frequencies[1], 150), 200);
+  setTimeout(() => playSound(frequencies[2], 200), 400);
 };
 
 export const playSessionInterrupted = () => {
-  playSound(400, 100);
-  setTimeout(() => playSound(400, 100), 120);
+  const theme = getSoundTheme();
+  const frequencies = soundThemes[theme].interrupted;
+  playSound(frequencies[0], 100);
+  setTimeout(() => playSound(frequencies[1], 100), 120);
 };
 
+// Nouveau : Définir le thème
+export const setSoundTheme = (theme) => {
+  if (soundThemes[theme]) {
+    localStorage.setItem('soundTheme', theme);
+    console.log('🎵 Thème sonore changé:', theme);
+  }
+};
+
+// Nouveau : Liste des thèmes
+export const getSoundThemes = () => Object.keys(soundThemes);

@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
+import { exportToCSV } from '../utils/exportCSV';
+import SoundSelector from './SoundSelector';
+import WeeklyChart from './WeeklyChart';
+
+
+
 
 export default function AnalyticsHeatmap({ userId }) {
   const [sessions, setSessions] = useState([]);
@@ -118,7 +124,8 @@ const fetchSessions = async () => {
   return (
     <div className="analytics-section">
       <h2>📊 Votre Productivité Visualisée</h2>
-      
+	   {/* NOUVEAU : Sélecteur de sons */}
+	  <SoundSelector />     
       <div className="insights-cards">
         <div className="insight-card">
           <span className="icon">📈</span>
@@ -146,7 +153,19 @@ const fetchSessions = async () => {
           </div>
         )}
       </div>
-
+	  
+		{/* NOUVEAU : Graphique hebdo */}
+		<WeeklyChart userId={userId} />
+		
+		{/* NOUVEAU : Bouton Export CSV */}
+		<div style={{ textAlign: 'center', margin: '20px 0' }}>
+		  <button 
+			onClick={() => exportToCSV(sessions, userId)}
+			className="export-btn"
+		  >
+			📥 Exporter en CSV
+		  </button>
+		</div>
       <div className="sessions-list">
         <h3>Historique des Sessions</h3>
         <table>
