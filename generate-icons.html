@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur Icônes PWA - Focus Fortress</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 { color: #1e40af; }
+        .icon-preview {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        canvas {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            background: #1e40af;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover { background: #1e3a8a; }
+        .success { color: #22c55e; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>🏰 Générateur d'Icônes PWA</h1>
+    <p>Cliquez sur les boutons pour télécharger les icônes nécessaires.</p>
+    
+    <div class="icon-preview">
+        <div>
+            <canvas id="canvas192"></canvas>
+            <p>192x192</p>
+        </div>
+        <div>
+            <canvas id="canvas512"></canvas>
+            <p>512x512</p>
+        </div>
+    </div>
+
+    <div id="buttons"></div>
+    <p id="status"></p>
+
+    <h2>📁 Instructions</h2>
+    <ol>
+        <li>Téléchargez les 3 images générées</li>
+        <li>Créez le dossier <code>public/icons/</code> dans votre projet</li>
+        <li>Placez les 3 fichiers PNG dans ce dossier</li>
+        <li>Relancez <code>npm run build && npm run preview</code></li>
+    </ol>
+
+    <script>
+        function drawIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Fond dégradé bleu/violet
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#1e40af'); // bleu
+            gradient.addColorStop(1, '#7c3aed'); // violet
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Bordure arrondie
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, size * 0.2);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+
+            // Emoji château
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${size * 0.5}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🏰', size / 2, size / 2);
+
+            return canvas;
+        }
+
+        function downloadCanvas(canvas, filename) {
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+                document.getElementById('status').innerHTML += 
+                    `<span class="success">✅ ${filename} téléchargé</span><br>`;
+            });
+        }
+
+        // Générer les previews
+        const canvas192 = drawIcon('canvas192', 192);
+        const canvas512 = drawIcon('canvas512', 512);
+
+        // Boutons de téléchargement
+        const buttonsDiv = document.getElementById('buttons');
+
+        const btn192 = document.createElement('button');
+        btn192.textContent = '⬇️ Télécharger pwa-192x192.png';
+        btn192.onclick = () => downloadCanvas(canvas192, 'pwa-192x192.png');
+        buttonsDiv.appendChild(btn192);
+
+        const btn512 = document.createElement('button');
+        btn512.textContent = '⬇️ Télécharger pwa-512x512.png';
+        btn512.onclick = () => downloadCanvas(canvas512, 'pwa-512x512.png');
+        buttonsDiv.appendChild(btn512);
+
+        const btnMaskable = document.createElement('button');
+        btnMaskable.textContent = '⬇️ Télécharger maskable-512x512.png';
+        btnMaskable.onclick = () => {
+            // Créer une version maskable (même chose pour l'instant)
+            downloadCanvas(canvas512, 'maskable-512x512.png');
+        };
+        buttonsDiv.appendChild(btnMaskable);
+
+        const btnAll = document.createElement('button');
+        btnAll.textContent = '⬇️ Télécharger TOUTES les icônes';
+        btnAll.style.background = '#22c55e';
+        btnAll.onclick = () => {
+            downloadCanvas(canvas192, 'pwa-192x192.png');
+            setTimeout(() => downloadCanvas(canvas512, 'pwa-512x512.png'), 500);
+            setTimeout(() => downloadCanvas(canvas512, 'maskable-512x512.png'), 1000);
+        };
+        buttonsDiv.appendChild(btnAll);
+    </script>
+</body>
+</html>
+

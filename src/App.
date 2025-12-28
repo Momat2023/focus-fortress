@@ -1,0 +1,139 @@
+import { useState, useEffect } from 'react';
+import { auth } from './firebase';
+import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import AdaptiveTimer from './components/AdaptiveTimer';
+import DeepWorkFortress from './components/DeepWorkFortress';
+import MicroBreaks from './components/MicroBreaks';
+import AnalyticsHeatmap from './components/AnalyticsHeatmap';
+import './App.css';
+
+function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [currentSession, setCurrentSession] = useState(null);
+  const [sessionId, setSessionId] = useState(null);
+  const [showBreak, setShowBreak] = useState(false);
+  const [view, setView] = useState('timer');
+
+  useEffect(() => {
+    // Écouter les changements d'authentification
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      if (currentUser) {
+        console.log('✅ Utilisateur connecté:', currentUser.uid);
+        setUser(currentUser);
+        setLoading(false);
+      } else {
+        // Pas d'utilisateur → Connexion anonyme
+        console.log('🔐 Connexion anonyme en cours...');
+        signInAnonymously(auth)
+          .then((userCred) => {
+            console.log('✅ Connexion anonyme réussie:', userCred.user.uid);
+            setUser(userCred.user);
+            setLoading(false);
+          })
+          .catch((error) => {
+            console.error('❌ Erreur authentification:', error.code, error.message);
+            // Mode fallback
+            setUser({ uid: 'demo-user' });
+            setLoading(false);
+          });
+      }
+    });
+
+    // Demander permission notifications
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+
+    return () => unsubscribe();
+  }, []);
+
+  const handleStartSession = (sessionData, id) => {
+    console.log('📝 Session créée:', id);
+    setCurrentSession(sessionData);
+    setSessionId(id);
+  };
+
+  const handleSessionComplete = () => {
+    console.log('✅ Session terminée');
+    setCurrentSession(null);
+    setShowBreak(true);
+  };
+
+  const handleBreakComplete = () => {
+    console.log('☕ Pause terminée');
+    setShowBreak(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="loading">
+        <div className="loader"></div>
+        <p>Connexion à Firebase...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <div className="loading">Erreur de connexion</div>;
+  }
+
+  return (
+    <div className="app">
+      <header>
+        <h1>⚔️ Focus Fortress</h1>
+        <nav>
+          <button 
+            onClick={() => setView('timer')}
+            className={view === 'timer' ? 'active' : ''}
+          >
+            Minuteur
+          </button>
+          <button 
+            onClick={() => setView('analytics')}
+            className={view === 'analytics' ? 'active' : ''}
+          >
+            Analytics
+          </button>
+        </nav>
+      </header>
+
+      <main>
+        {view === 'timer' && (
+          <>
+            {!currentSession && !showBreak && (
+              <AdaptiveTimer 
+                userId={user.uid} 
+                onStartSession={handleStartSession}
+              />
+            )}
+
+            {currentSession && (
+              <DeepWorkFortress
+                userId={user.uid}
+                sessionId={sessionId}
+                duration={currentSession.duration}
+                onComplete={handleSessionComplete}
+              />
+            )}
+
+            {showBreak && (
+              <MicroBreaks onComplete={handleBreakComplete} />
+            )}
+          </>
+        )}
+
+        {view === 'analytics' && (
+          <AnalyticsHeatmap userId={user.uid} />
+        )}
+      </main>
+
+      <footer style={{textAlign: 'center', marginTop: '40px', opacity: 0.5, fontSize: '0.85rem'}}>
+        User ID: {user.uid.slice(0, 8)}...
+      </footer>
+    </div>
+  );
+}
+
+export default App;
+
